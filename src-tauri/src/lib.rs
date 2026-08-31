@@ -10,16 +10,19 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager,
 };
+use tauri_nspanel::{ManagerExt, WebviewWindowExt};
+
+const NONACTIVATING_PANEL_MASK: i32 = 1 << 7;
+const MAIN_MENU_WINDOW_LEVEL: i32 = 24;
 
 fn toggle_panel(app: &tauri::AppHandle) {
-    let Some(window) = app.get_webview_window("main") else {
+    let Ok(panel) = app.get_webview_panel("main") else {
         return;
     };
-    if window.is_visible().unwrap_or(false) {
-        let _ = window.hide();
+    if panel.is_visible() {
+        panel.order_out(None);
     } else {
-        let _ = window.show();
-        let _ = window.set_focus();
+        panel.show();
     }
 }
 
@@ -27,9 +30,17 @@ fn toggle_panel(app: &tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_nspanel::init())
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            let window = app
+                .get_webview_window("main")
+                .expect("main window should exist");
+            let panel = window.to_panel()?;
+            panel.set_level(MAIN_MENU_WINDOW_LEVEL + 1);
+            panel.set_style_mask(NONACTIVATING_PANEL_MASK);
 
             let icon = Image::from_bytes(include_bytes!("../icons/tray-placeholder.png"))?;
 
