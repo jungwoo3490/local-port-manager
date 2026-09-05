@@ -5,6 +5,7 @@ fn greet(name: &str) -> String {
 }
 
 mod model;
+mod normalize;
 mod resolver;
 mod scanner;
 
