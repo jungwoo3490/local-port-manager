@@ -4,6 +4,9 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+mod model;
+mod scanner;
+
 use tauri::{
     image::Image,
     menu::{Menu, MenuItem},
