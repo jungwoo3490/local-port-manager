@@ -1,9 +1,4 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
+mod commands;
 mod model;
 mod normalize;
 mod resolver;
@@ -15,6 +10,7 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, PhysicalPosition, Position, Rect, Size, WindowEvent,
 };
+use tauri_nspanel::cocoa::appkit::NSWindowCollectionBehavior;
 use tauri_nspanel::{ManagerExt, WebviewWindowExt};
 
 const NONACTIVATING_PANEL_MASK: i32 = 1 << 7;
@@ -99,6 +95,11 @@ pub fn run() {
             let panel = window.to_panel()?;
             panel.set_level(MAIN_MENU_WINDOW_LEVEL + 1);
             panel.set_style_mask(NONACTIVATING_PANEL_MASK);
+            panel.set_collection_behaviour(
+                NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces
+                    | NSWindowCollectionBehavior::NSWindowCollectionBehaviorFullScreenAuxiliary
+                    | NSWindowCollectionBehavior::NSWindowCollectionBehaviorStationary,
+            );
 
             let icon = Image::from_bytes(include_bytes!("../icons/tray-placeholder.png"))?;
 
@@ -132,7 +133,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, hide_panel])
+        .invoke_handler(tauri::generate_handler![commands::list_ports, hide_panel])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
