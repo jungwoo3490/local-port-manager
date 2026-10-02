@@ -2,11 +2,14 @@ import type { PortEntry } from "../types/port";
 
 interface PortRowProps {
   entry: PortEntry;
+  isKilling: boolean;
+  failureMessage: string | null;
+  onKill: (entry: PortEntry) => void;
 }
 
-export function PortRow({ entry }: PortRowProps) {
+export function PortRow({ entry, isKilling, failureMessage, onKill }: PortRowProps) {
   return (
-    <li className="port-row">
+    <li className={isKilling ? "port-row port-row--killing" : "port-row"}>
       <div className="port-row__main">
         <span className="port-row__port">{entry.port}</span>
         <span className="port-row__name" title={entry.processName}>
@@ -24,6 +27,14 @@ export function PortRow({ entry }: PortRowProps) {
             </span>
           )}
         </span>
+        <button
+          className={entry.isSystem ? "kill-button kill-button--system" : "kill-button"}
+          type="button"
+          disabled={isKilling}
+          onClick={() => onKill(entry)}
+        >
+          {isKilling ? <span className="spinner" aria-label="종료 중" /> : "종료"}
+        </button>
       </div>
       <div className="port-row__meta">
         <span>PID {entry.pid}</span>
@@ -33,6 +44,7 @@ export function PortRow({ entry }: PortRowProps) {
       <div className="port-row__path" title={entry.execPath}>
         {entry.execPath || "경로 확인 불가"}
       </div>
+      {failureMessage !== null && <div className="port-row__failure">{failureMessage}</div>}
     </li>
   );
 }

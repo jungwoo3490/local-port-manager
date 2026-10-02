@@ -1,5 +1,9 @@
+import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { useKillProcess } from "../hooks/useKillProcess";
 import { usePanelVisibility } from "../hooks/usePanelVisibility";
 import { usePortList } from "../hooks/usePortList";
+import { KillConfirmDialog } from "./KillConfirmDialog";
 import { PanelMessage } from "./PanelMessage";
 import { PortList } from "./PortList";
 import { PortSkeleton } from "./PortSkeleton";
@@ -7,6 +11,29 @@ import { PortSkeleton } from "./PortSkeleton";
 export function PortPanel() {
   const isVisible = usePanelVisibility();
   const { ports, status, error, refetch } = usePortList(isVisible);
+  const { pendingKill, killingPids, killFailure, notice, requestKill, confirmKill, cancelKill } =
+    useKillProcess(refetch);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+      if (pendingKill !== null) {
+        cancelKill();
+      } else {
+        void invoke("hide_panel");
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [pendingKill, cancelKill]);
+
+  useEffect(() => {
+    if (!isVisible) {
+      cancelKill();
+    }
+  }, [isVisible, cancelKill]);
 
   const visibleEntries = ports;
   const hasData = ports.length > 0;
@@ -37,7 +64,14 @@ export function PortPanel() {
     if (visibleEntries.length === 0) {
       return <PanelMessage title="검색 결과가 없습니다" detail="검색어나 필터를 지워보세요." />;
     }
-    return <PortList entries={visibleEntries} />;
+    return (
+      <PortList
+        entries={visibleEntries}
+        killingPids={killingPids}
+        killFailure={killFailure}
+        onKill={requestKill}
+      />
+    );
   }
 
   return (
@@ -54,7 +88,11 @@ export function PortPanel() {
 
       <div className="panel__body">{renderBody()}</div>
 
-      <footer className="panel__footer">내 권한으로 보이는 포트만 표시됩니다</footer>
+      <footer className={notice !== null ? "panel__footer panel__footer--notice" : "panel__footer"}>
+        {notice ?? "내 권한으로 보이는 포트만 표시됩니다"}
+      </footer>
+
+      <KillConfirmDialog target={pendingKill} onConfirm={confirmKill} onCancel={cancelKill} />
     </div>
   );
 }
