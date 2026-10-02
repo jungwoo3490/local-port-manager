@@ -102,7 +102,7 @@ pub fn run() {
                     | NSWindowCollectionBehavior::NSWindowCollectionBehaviorStationary,
             );
 
-            let icon = Image::from_bytes(include_bytes!("../icons/tray-placeholder.png"))?;
+            let icon = Image::from_bytes(include_bytes!("../icons/tray-icon.png"))?;
 
             let show_item = MenuItem::with_id(app, "show", "패널 열기", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "종료", true, None::<&str>)?;
