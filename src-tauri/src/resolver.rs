@@ -28,6 +28,7 @@ impl ProcessResolver {
         info
     }
 
+    #[cfg(test)]
     pub fn cached_count(&self) -> usize {
         self.cache.len()
     }

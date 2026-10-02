@@ -1,3 +1,4 @@
+use crate::killer::{self, KillError, KillOutcome};
 use crate::model::PortEntry;
 use crate::normalize::normalize;
 use crate::resolver::ProcessResolver;
@@ -8,6 +9,11 @@ pub fn list_ports() -> Result<Vec<PortEntry>, String> {
     let sockets = scan_listening_sockets()?;
     let mut resolver = ProcessResolver::new();
     Ok(normalize(sockets, &mut resolver))
+}
+
+#[tauri::command(async)]
+pub fn kill_process(pid: u32) -> Result<KillOutcome, KillError> {
+    killer::terminate(pid)
 }
 
 #[cfg(test)]

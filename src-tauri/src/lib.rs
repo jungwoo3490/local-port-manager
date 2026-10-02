@@ -1,4 +1,5 @@
 mod commands;
+mod killer;
 mod model;
 mod normalize;
 mod resolver;
@@ -133,7 +134,11 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::list_ports, hide_panel])
+        .invoke_handler(tauri::generate_handler![
+            commands::list_ports,
+            commands::kill_process,
+            hide_panel
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
