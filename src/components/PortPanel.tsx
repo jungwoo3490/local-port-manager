@@ -2,17 +2,21 @@ import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useKillProcess } from "../hooks/useKillProcess";
 import { usePanelVisibility } from "../hooks/usePanelVisibility";
+import { usePortFilters } from "../hooks/usePortFilters";
 import { usePortList } from "../hooks/usePortList";
+import { FilterBar } from "./FilterBar";
 import { KillConfirmDialog } from "./KillConfirmDialog";
 import { PanelMessage } from "./PanelMessage";
 import { PortList } from "./PortList";
 import { PortSkeleton } from "./PortSkeleton";
+import { SearchBar } from "./SearchBar";
 
 export function PortPanel() {
   const isVisible = usePanelVisibility();
   const { ports, status, error, refetch } = usePortList(isVisible);
   const { pendingKill, killingPids, killFailure, notice, requestKill, confirmKill, cancelKill } =
     useKillProcess(refetch);
+  const filters = usePortFilters(ports, isVisible);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -35,11 +39,16 @@ export function PortPanel() {
     }
   }, [isVisible, cancelKill]);
 
-  const visibleEntries = ports;
+  const visibleEntries = filters.entries;
   const hasData = ports.length > 0;
   const isInitialLoading = status === "loading" && !hasData;
   const isBlockingError = status === "error" && !hasData;
   const isStale = error !== null && hasData;
+
+  const footerText =
+    filters.hiddenSystemCount > 0
+      ? `시스템 프로세스 ${filters.hiddenSystemCount}개 숨김 · 내 권한으로 보이는 포트만 표시됩니다`
+      : "내 권한으로 보이는 포트만 표시됩니다";
 
   function renderBody() {
     if (isInitialLoading) {
@@ -86,10 +95,25 @@ export function PortPanel() {
         )}
       </header>
 
+      <div className="panel__controls">
+        <SearchBar
+          query={filters.query}
+          inputRef={filters.searchInputRef}
+          onChange={filters.changeQuery}
+          onClear={filters.clearQuery}
+        />
+        <FilterBar
+          devPortsOnly={filters.devPortsOnly}
+          hideSystem={filters.hideSystem}
+          onToggleDevPortsOnly={filters.toggleDevPortsOnly}
+          onToggleHideSystem={filters.toggleHideSystem}
+        />
+      </div>
+
       <div className="panel__body">{renderBody()}</div>
 
       <footer className={notice !== null ? "panel__footer panel__footer--notice" : "panel__footer"}>
-        {notice ?? "내 권한으로 보이는 포트만 표시됩니다"}
+        {notice ?? footerText}
       </footer>
 
       <KillConfirmDialog target={pendingKill} onConfirm={confirmKill} onCancel={cancelKill} />
